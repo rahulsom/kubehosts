@@ -1,0 +1,3 @@
+= kubehosts
+
+Alternative to default-http-backend that tells you how to configure your `/etc/hosts` file.
