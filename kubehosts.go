@@ -40,22 +40,24 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	namespaces := namespaceList.Items
 	for n := range namespaces {
 		ns := namespaces[n]
-		fmt.Fprintf(w, "# Namespace: %s\n", ns.Name)
+		if ns.Name != "kube-system" {
+			fmt.Fprintf(w, "# Namespace: %s\n", ns.Name)
 
-		ingressList, err := clientset.ExtensionsV1beta1Client.Ingresses(ns.Name).List(metav1.ListOptions{})
-		if err != nil {
-			panic(err.Error())
-		}
-
-		fmt.Printf("There are %d ingresses in the cluster\n", len(ingressList.Items))
-		for i := range ingressList.Items {
-			ingress := ingressList.Items[i]
-			for r := range ingress.Spec.Rules {
-				rule := ingress.Spec.Rules[r]
-				fmt.Fprintf(w, "hostess add %s %s\n", rule.Host, ingress.Status.LoadBalancer.Ingress[0].IP)
+			ingressList, err := clientset.ExtensionsV1beta1Client.Ingresses(ns.Name).List(metav1.ListOptions{})
+			if err != nil {
+				panic(err.Error())
 			}
+
+			fmt.Printf("There are %d ingresses in the cluster\n", len(ingressList.Items))
+			for i := range ingressList.Items {
+				ingress := ingressList.Items[i]
+				for r := range ingress.Spec.Rules {
+					rule := ingress.Spec.Rules[r]
+					fmt.Fprintf(w, "hostess add %s %s\n", rule.Host, ingress.Status.LoadBalancer.Ingress[0].IP)
+				}
+			}
+			fmt.Fprint(w, "\n")
 		}
-		fmt.Fprint(w, "\n")
 	}
 
 }
