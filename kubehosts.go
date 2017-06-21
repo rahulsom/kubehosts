@@ -20,7 +20,7 @@ const shellHeader = `#!/bin/bash
 #
 # On mac os, you can run this command to add all these entries
 #
-#     bash <(curl -s {{Hostname}})
+#     bash <(curl -s {{.Hostname}})
 #
 # Install hostess if you don't have it already
 which hostess || brew install hostess
