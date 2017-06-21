@@ -18,13 +18,55 @@ const shellHeader = `#!/bin/bash
 #
 # 404: Not found
 #
-# On mac os, you can run this command to add all these entries
+# On some platforms, you can run this command to add all these entries
 #
 #     bash <(curl -s {{.Hostname}})
 #
-# Install hostess if you don't have it already
-which hostess || brew install hostess
+# Supported platforms:
+# - Mac OS i386 and x64
+# - Linux i386 and x64
 
+### Install hostess if you don't have it already
+function installHostess() {
+	ostype=unknown
+	case "$(uname -s)" in
+	  Darwin)
+		ostype=darwin
+		;;
+	  Linux)
+		ostype=linux
+		;;
+	esac
+	osarch=unknown
+	case "$(uname -m)" in
+	  x86_64)
+		osarch=amd64
+		;;
+	  i386)
+		osarch=386
+		;;
+	esac
+
+	if [ $ostype = unknown ]; then
+	  echo "Unknown OS. Install hostess manually. Look at https://github.com/cbednarski/hostess"
+	  exit 1
+	fi
+	if [ $osarch = unknown ]; then
+	  echo "Unknown Architecture. Install hostess manually. Look at https://github.com/cbednarski/hostess"
+	  exit 2
+	fi
+
+	mkdir -p ~/bin
+
+	if [ ! -x ~/bin/hostess ]; then
+		curl -L https://github.com/cbednarski/hostess/releases/download/v0.2.0/hostess_${ostype}_${osarch} > ~/bin/hostess
+		chmod a+x ~/bin/hostess
+	fi
+
+	export PATH=$PATH:$HOME/bin
+}
+
+which hostess || installHostess
 
 ### These are domains we know. Hostess can add these to your hosts file
 `
@@ -97,10 +139,10 @@ func renderHealth(w http.ResponseWriter, r *http.Request) {
 
 	if len(namespaces) < 1 {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "No namespaces found")
+		fmt.Fprint(w, "No namespaces found")
 	} else {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "All OK")
+		fmt.Fprint(w, "All OK")
 	}
 }
 
