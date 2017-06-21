@@ -7,22 +7,32 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"text/template"
 )
+
+type KubeHost struct {
+	Hostname string
+}
+
+const shellHeader = `#!/bin/bash
+#
+# 404: Not found
+#
+# On mac os, you can run this command to add all these entries
+#
+#     bash <(curl -s {{Hostname}})
+#
+# Install hostess if you don't have it already
+which hostess || brew install hostess
+
+
+### These are domains we know. Hostess can add these to your hosts file
+`
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprint(w, "#!/bin/bash\n")
-	fmt.Fprint(w, "#\n")
-	fmt.Fprint(w, "# 404: Not found\n")
-	fmt.Fprint(w, "#\n")
-	fmt.Fprint(w, "# On mac os, you can run this command to add all these entries\n")
-	fmt.Fprint(w, "#\n")
-	fmt.Fprintf(w, "#     bash <(curl -s %s)\n", r.Host)
-	fmt.Fprint(w, "#\n")
-	fmt.Fprint(w, "# Install hostess if you don't have it already\n")
-	fmt.Fprint(w, "which hostess || brew install hostess\n")
-	fmt.Fprint(w, "\n")
-	fmt.Fprint(w, "### These are domains we know. Hostess can add these to your hosts file\n")
+	tmpl, err := template.New("kubehosts").Parse(shellHeader)
+	fmt.Fprint(w, tmpl.Execute(w, KubeHost{r.Host}))
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
