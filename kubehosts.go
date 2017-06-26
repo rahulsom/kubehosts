@@ -8,6 +8,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"text/template"
+	"time"
+	"math/rand"
 )
 
 type KubeHost struct {
@@ -96,6 +98,8 @@ func renderScript(w http.ResponseWriter, r *http.Request) {
 		panic(err.Error())
 	}
 	namespaces := namespaceList.Items
+	s := rand.NewSource(time.Now().Unix())
+	rn := rand.New(s)
 	for n := range namespaces {
 		ns := namespaces[n]
 		fmt.Fprintf(w, "# Namespace: %s\n", ns.Name)
@@ -110,7 +114,12 @@ func renderScript(w http.ResponseWriter, r *http.Request) {
 			ingress := ingressList.Items[i]
 			for r := range ingress.Spec.Rules {
 				rule := ingress.Spec.Rules[r]
-				fmt.Fprintf(w, "hostess add %s %s\n", rule.Host, ingress.Status.LoadBalancer.Ingress[0].IP)
+				ingresses := ingress.Status.LoadBalancer.Ingress
+
+				index := rn.Intn(len(ingresses))
+
+				balancerIngress := ingresses[index]
+				fmt.Fprintf(w, "hostess add %s %s\n", rule.Host, balancerIngress.IP)
 			}
 		}
 		fmt.Fprint(w, "\n")
