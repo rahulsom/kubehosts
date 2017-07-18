@@ -20,6 +20,15 @@ import (
 
 var kubeconfig *string
 
+func configureKube() {
+	if home := homedir.HomeDir(); home != "" {
+		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+	} else {
+		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	}
+	flag.Parse()
+}
+
 type KubeHost struct {
 	Hostname string
 }
@@ -191,12 +200,7 @@ func getConfig() (*rest.Config, error) {
 }
 
 func main() {
-	if home := homedir.HomeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	}
-	flag.Parse()
+	configureKube()
 
 	http.HandleFunc("/", renderScript)
 	http.HandleFunc("/healthz", renderHealth)
