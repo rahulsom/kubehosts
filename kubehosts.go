@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"net/http"
 
+	"flag"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
+	"math/rand"
+	"path/filepath"
 	"text/template"
 	"time"
-	"math/rand"
 )
+
+var kubeconfig *string
 
 type KubeHost struct {
 	Hostname string
@@ -84,7 +90,7 @@ func renderScript(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	config, err := rest.InClusterConfig()
+	config, err := getConfig()
 	if err != nil {
 		panic(err.Error())
 	}
@@ -109,7 +115,7 @@ func renderScript(w http.ResponseWriter, r *http.Request) {
 			panic(err.Error())
 		}
 
-		fmt.Printf("There are %d ingresses in the cluster\n", len(ingressList.Items))
+		fmt.Printf("There are %d ingresses in the %s namespace\n", len(ingressList.Items), ns.Name)
 		for i := range ingressList.Items {
 			ingress := ingressList.Items[i]
 			for r := range ingress.Spec.Rules {
@@ -129,7 +135,7 @@ func renderScript(w http.ResponseWriter, r *http.Request) {
 
 func renderHealth(w http.ResponseWriter, r *http.Request) {
 
-	config, err := rest.InClusterConfig()
+	config, err := getConfig()
 	if err != nil {
 		panic(err.Error())
 	}
@@ -153,7 +159,30 @@ func renderHealth(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getConfig() (*rest.Config, error) {
+
+	config, err := rest.InClusterConfig()
+
+	if err == nil {
+		return config, err
+	}
+
+	config, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return config, err
+}
+
 func main() {
+	if home := homedir.HomeDir(); home != "" {
+		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+	} else {
+		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	}
+	flag.Parse()
+
 	http.HandleFunc("/", renderScript)
 	http.HandleFunc("/healthz", renderHealth)
 	http.ListenAndServe(":8080", nil)
