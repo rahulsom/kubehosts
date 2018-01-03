@@ -90,7 +90,7 @@ function installHostess() {
 	export PATH=$PATH:$HOME/bin
 }
 
-which hostess || installHostess
+which hostess > /dev/null || installHostess
 
 ### These are domains we know. Hostess can add these to your hosts file
 `
