@@ -47,22 +47,16 @@ const shellHeader = `#!/bin/bash
 function installHostess() {
 	ostype=unknown
 	case "$(uname -s)" in
-	  Darwin)
-		ostype=darwin
-		;;
-	  Linux)
-		ostype=linux
-		;;
+	  Darwin) ostype=darwin ;;
+	  Linux)  ostype=linux ;;
 	esac
+
 	osarch=unknown
 	case "$(uname -m)" in
-	  x86_64)
-		osarch=amd64
-		;;
-	  i386)
-		osarch=386
-		;;
+	  x86_64) osarch=amd64 ;;
+	  i386)   osarch=386 ;;
 	esac
+
 	if [ $ostype = unknown ]; then
 	  echo "Unknown OS. Install hostess manually. Look at https://github.com/cbednarski/hostess"
 	  exit 1
@@ -71,6 +65,7 @@ function installHostess() {
 	  echo "Unknown Architecture. Install hostess manually. Look at https://github.com/cbednarski/hostess"
 	  exit 2
 	fi
+
 	mkdir -p ~/bin
 	if [ ! -x ~/bin/hostess ]; then
 		curl -L https://github.com/cbednarski/hostess/releases/download/v0.2.0/hostess_${ostype}_${osarch} > ~/bin/hostess
@@ -78,6 +73,7 @@ function installHostess() {
 	fi
 	export PATH=$PATH:$HOME/bin
 }
+
 function h() {
 	echo -n $(hostess add $1 $2 \
 			| sed -e "s/^Updated /$(tput setaf 4; tput dim)/g" \
@@ -85,8 +81,14 @@ function h() {
 			| sed -e "s/\..*/$(tput sgr0)/g")
 	echo -n " "
 }
+
 function ns() {
-	echo "";echo Namespace:$(tput setaf 3; tput bold) $1 $(tput sgr0)
+	echo ""
+	if [ $2 -gt 0 ]; then
+		echo $(tput setaf 3; tput bold) $1 $(tput sgr0)
+	else
+		echo $(tput setaf 0; tput bold) $1 $(tput sgr0)
+	fi
 }
 which hostess > /dev/null || installHostess
 ### These are domains we know. Hostess can add these to your hosts file
@@ -123,12 +125,13 @@ func renderScript(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, "\n")
 }
+
 func processNamespace(w http.ResponseWriter, ns v1.Namespace, clientset *kubernetes.Clientset, rn *rand.Rand) {
-	fmt.Fprintf(w, "ns %s\n", ns.Name)
 	ingressList, err := clientset.ExtensionsV1beta1().Ingresses(ns.Name).List(metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
+	fmt.Fprintf(w, "ns %s %d\n", ns.Name, ingressList.Size())
 	for i := range ingressList.Items {
 		ingress := ingressList.Items[i]
 		processIngress(ingress, rn, w)
@@ -138,6 +141,7 @@ func processNamespace(w http.ResponseWriter, ns v1.Namespace, clientset *kuberne
 	}
 	fmt.Fprint(w, "\n")
 }
+
 func processIngress(ingress v1beta1.Ingress, rn *rand.Rand, w http.ResponseWriter) {
 	for r := range ingress.Spec.Rules {
 		rule := ingress.Spec.Rules[r]
@@ -147,6 +151,7 @@ func processIngress(ingress v1beta1.Ingress, rn *rand.Rand, w http.ResponseWrite
 		fmt.Fprintf(w, "h %s %s\n", rule.Host, balancerIngress.IP)
 	}
 }
+
 func renderHealth(w http.ResponseWriter, r *http.Request) {
 	config, err := getConfig()
 	if err != nil {
@@ -169,6 +174,7 @@ func renderHealth(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "All OK")
 	}
 }
+
 func getConfig() (*rest.Config, error) {
 	config, err := rest.InClusterConfig()
 	if err == nil {
@@ -180,6 +186,7 @@ func getConfig() (*rest.Config, error) {
 	}
 	return config, err
 }
+
 func main() {
 	configureKube()
 	http.HandleFunc("/", renderScript)
