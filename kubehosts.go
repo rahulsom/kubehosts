@@ -121,6 +121,7 @@ func renderScript(w http.ResponseWriter, r *http.Request) {
 		ns := namespaces[n]
 		processNamespace(w, ns, clientset, rn)
 	}
+	fmt.Fprint(w, "\n")
 }
 func processNamespace(w http.ResponseWriter, ns v1.Namespace, clientset *kubernetes.Clientset, rn *rand.Rand) {
 	fmt.Fprintf(w, "ns %s\n", ns.Name)
@@ -131,6 +132,9 @@ func processNamespace(w http.ResponseWriter, ns v1.Namespace, clientset *kuberne
 	for i := range ingressList.Items {
 		ingress := ingressList.Items[i]
 		processIngress(ingress, rn, w)
+	}
+	if ingressList.Size() > 0 {
+		fmt.Fprint(w, "echo ''")
 	}
 	fmt.Fprint(w, "\n")
 }
