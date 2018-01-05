@@ -75,6 +75,12 @@ function installHostess() {
 }
 
 function h() {
+	if [ $lc -gt 5 ]; then
+		echo ""
+		echo -ne "\t"
+		lc=0
+	fi
+	lc=$((lc + 1))
 	echo -n $(hostess add $1 $2 \
 			| sed -e "s/^Updated /$(tput setaf 4; tput dim)/g" \
 			| sed -e "s/^Added /$(tput setaf 2; tput bold)/g" \
@@ -82,12 +88,14 @@ function h() {
 	echo -n " "
 }
 
+lc=0
 function ns() {
-	echo ""
+	lc=0
 	if [ $2 -gt 0 ]; then
-		echo -ne "$(tput setaf 3; tput bold)$1$(tput sgr0)\t"
+		echo "$(tput setaf 3; tput bold)$1$(tput sgr0)"
+		echo -ne "\t"
 	else
-		echo -ne "$(tput setaf 0; tput bold)$1$(tput sgr0)\t"
+		echo -n"$(tput setaf 0; tput bold)$1$(tput sgr0)"
 	fi
 }
 which hostess > /dev/null || installHostess
