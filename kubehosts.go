@@ -85,9 +85,9 @@ function h() {
 function ns() {
 	echo ""
 	if [ $2 -gt 0 ]; then
-		echo -n "$(tput setaf 3; tput bold)$1$(tput sgr0):   "
+		echo -ne "$(tput setaf 3; tput bold)$1$(tput sgr0)\t"
 	else
-		echo -n "$(tput setaf 0; tput bold)$1$(tput sgr0):   "
+		echo -ne "$(tput setaf 0; tput bold)$1$(tput sgr0)\t"
 	fi
 }
 which hostess > /dev/null || installHostess
@@ -139,7 +139,7 @@ func processNamespace(w http.ResponseWriter, ns v1.Namespace, clientset *kuberne
 	if ingressList.Size() > 0 {
 		fmt.Fprint(w, "echo ''")
 	}
-	fmt.Fprint(w, "\n")
+	fmt.Fprint(w, "\n\n")
 }
 
 func processIngress(ingress v1beta1.Ingress, rn *rand.Rand, w http.ResponseWriter) {
