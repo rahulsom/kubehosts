@@ -131,7 +131,7 @@ func processNamespace(w http.ResponseWriter, ns v1.Namespace, clientset *kuberne
 	if err != nil {
 		panic(err.Error())
 	}
-	fmt.Fprintf(w, "ns %s %d\n", ns.Name, ingressList.Size())
+	fmt.Fprintf(w, "ns %s %d\n", ns.Name, len(ingressList.Items))
 	for i := range ingressList.Items {
 		ingress := ingressList.Items[i]
 		processIngress(ingress, rn, w)
