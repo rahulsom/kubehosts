@@ -75,27 +75,17 @@ function installHostess() {
 }
 
 function h() {
-	if [ $lc -gt 5 ]; then
-		echo ""
-		echo -ne "\t"
-		lc=0
-	fi
-	lc=$((lc + 1))
-	echo -n $(hostess add $1 $2 \
+	cat - \
 			| sed -e "s/^Updated /$(tput setaf 4; tput dim)/g" \
 			| sed -e "s/^Added /$(tput setaf 2; tput bold)/g" \
-			| sed -e "s/\..*/$(tput sgr0)/g")
-	echo -n " "
+			| sed -e "s/\..*/$(tput sgr0)/g"
 }
 
-lc=0
 function ns() {
-	lc=0
 	if [ $2 -gt 0 ]; then
 		echo "$(tput setaf 3; tput bold)$1$(tput sgr0)"
-		echo -ne "\t"
 	else
-		echo -n"$(tput setaf 0; tput bold)$1$(tput sgr0)"
+		echo -n "$(tput setaf 0; tput bold)$1$(tput sgr0)"
 	fi
 }
 which hostess > /dev/null || installHostess
@@ -140,13 +130,16 @@ func processNamespace(w http.ResponseWriter, ns v1.Namespace, clientset *kuberne
 		panic(err.Error())
 	}
 	fmt.Fprintf(w, "ns %s %d\n", ns.Name, len(ingressList.Items))
-	for i := range ingressList.Items {
-		ingress := ingressList.Items[i]
-		processIngress(ingress, rn, w)
+	if len(ingressList.Items) > 0 {
+		fmt.Fprint(w, "f() {\n")
+		for i := range ingressList.Items {
+			ingress := ingressList.Items[i]
+			processIngress(ingress, rn, w)
+		}
+		fmt.Fprint(w, "}\n")
+		fmt.Fprint(w, "f | column\n")
 	}
-	if ingressList.Size() > 0 {
-		fmt.Fprint(w, "echo ''")
-	}
+	fmt.Fprint(w, "echo ''")
 	fmt.Fprint(w, "\n\n")
 }
 
@@ -156,7 +149,7 @@ func processIngress(ingress v1beta1.Ingress, rn *rand.Rand, w http.ResponseWrite
 		ingresses := ingress.Status.LoadBalancer.Ingress
 		index := rn.Intn(len(ingresses))
 		balancerIngress := ingresses[index]
-		fmt.Fprintf(w, "h %s %s\n", rule.Host, balancerIngress.IP)
+		fmt.Fprintf(w, "  hostess add %s %s | h\n", rule.Host, balancerIngress.IP)
 	}
 }
 
