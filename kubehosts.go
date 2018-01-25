@@ -45,48 +45,49 @@ const shellHeader = `#!/bin/bash
 # - Linux i386 and x64
 ### Install hostess if you don't have it already
 function installHostess() {
-	ostype=unknown
-	case "$(uname -s)" in
-	  Darwin) ostype=darwin ;;
-	  Linux)  ostype=linux ;;
-	esac
+  ostype=unknown
+  case "$(uname -s)" in
+    Darwin) ostype=darwin ;;
+    Linux)  ostype=linux ;;
+  esac
 
-	osarch=unknown
-	case "$(uname -m)" in
-	  x86_64) osarch=amd64 ;;
-	  i386)   osarch=386 ;;
-	esac
+  osarch=unknown
+  case "$(uname -m)" in
+    x86_64) osarch=amd64 ;;
+    i386)   osarch=386 ;;
+  esac
 
-	if [ $ostype = unknown ]; then
-	  echo "Unknown OS. Install hostess manually. Look at https://github.com/cbednarski/hostess"
-	  exit 1
-	fi
-	if [ $osarch = unknown ]; then
-	  echo "Unknown Architecture. Install hostess manually. Look at https://github.com/cbednarski/hostess"
-	  exit 2
-	fi
+  if [ $ostype = unknown ]; then
+    echo "Unknown OS. Install hostess manually. Look at https://github.com/cbednarski/hostess"
+    exit 1
+  fi
+  if [ $osarch = unknown ]; then
+    echo "Unknown Architecture. Install hostess manually. Look at https://github.com/cbednarski/hostess"
+    exit 2
+  fi
 
-	mkdir -p ~/bin
-	if [ ! -x ~/bin/hostess ]; then
-		curl -L https://github.com/cbednarski/hostess/releases/download/v0.2.0/hostess_${ostype}_${osarch} > ~/bin/hostess
-		chmod a+x ~/bin/hostess
-	fi
-	export PATH=$PATH:$HOME/bin
+  mkdir -p ~/bin
+  if [ ! -x ~/bin/hostess ]; then
+    curl -L https://github.com/cbednarski/hostess/releases/download/v0.2.0/hostess_${ostype}_${osarch} > ~/bin/hostess
+    chmod a+x ~/bin/hostess
+  fi
+  export PATH=$PATH:$HOME/bin
 }
 
 function h() {
-	cat - \
-			| sed -e "s/^Updated /$(tput setaf 4; tput dim)/g" \
-			| sed -e "s/^Added /$(tput setaf 2; tput bold)/g" \
-			| sed -e "s/\..*/$(tput sgr0)/g"
+  cat - \
+    | sed -e "s/^Updated /$(tput setaf 4; tput dim)/g" \
+    | sed -e "s/^Added /$(tput setaf 2; tput bold)/g" \
+    | sed -e "s/ .*//g" \
+    | sed -e "s/\./$(tput sgr0)./g"
 }
 
 function ns() {
-	if [ $2 -gt 0 ]; then
-		echo "$(tput setaf 3; tput bold)$1$(tput sgr0)"
-	else
-		echo -n "$(tput setaf 0; tput bold)$1$(tput sgr0)"
-	fi
+  if [ $2 -gt 0 ]; then
+    echo "$(tput setaf 3; tput bold)$1$(tput sgr0)"
+  else
+    echo -n "$(tput setaf 0; tput bold)$1$(tput sgr0)"
+  fi
 }
 which hostess > /dev/null || installHostess
 ### These are domains we know. Hostess can add these to your hosts file
