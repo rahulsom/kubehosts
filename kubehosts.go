@@ -84,9 +84,9 @@ function h() {
 
 function ns() {
   if [ $2 -gt 0 ]; then
-    echo "$(tput setaf 3; tput bold)$1$(tput sgr0)"
+    echo "$(tput setaf 3; tput bold)$1$(tput setaf 0; tput dim) - $2 ingresses$(tput sgr0)"
   else
-    echo -n "$(tput setaf 0; tput bold)$1$(tput sgr0)"
+    echo -n "$(tput setaf 0; tput dim)$1 - $2 ingresses$(tput sgr0)"
   fi
 }
 which hostess > /dev/null || installHostess
